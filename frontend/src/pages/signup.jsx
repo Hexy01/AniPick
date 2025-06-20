@@ -17,8 +17,8 @@ function Signup() {
     const res = await axios.post("/api/auth/signup", form);
     if (res.status === 201 || res.status === 200) {
       const { token, username } = res.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("username", username);
+localStorage.setItem("token", token);
+localStorage.setItem("username", username);
       navigate("/"); // go to home page
     }
   } catch (err) {
