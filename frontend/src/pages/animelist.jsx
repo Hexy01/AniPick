@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-
+import { Link, useSearchParams } from "react-router-dom";
 
 function AnimeList() {
   const [animeList, setAnimeList] = useState([]);
@@ -8,31 +7,56 @@ function AnimeList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    fetchAnimeList(currentPage);
-  }, [currentPage]);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search");
 
-  async function fetchAnimeList(page) {
+  useEffect(() => {
+    setAnimeList([]); // reset on new query or fresh visit
+    setCurrentPage(1);
+    setHasMore(true);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      fetchSearchResults(searchQuery);
+    } else {
+      fetchPaginatedList(currentPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, currentPage]);
+
+  const fetchPaginatedList = async (page) => {
     setLoading(true);
     try {
       const res = await fetch(`https://api.jikan.moe/v4/anime?page=${page}`);
       const data = await res.json();
-
       if (data.data.length === 0) {
-        setHasMore(false); // No more data to load
+        setHasMore(false);
       } else {
         setAnimeList((prev) => [...prev, ...data.data]);
       }
     } catch (err) {
-      console.error("Failed to fetch anime:", err);
+      console.error("📛 Error fetching anime:", err);
     } finally {
       setLoading(false);
     }
-  }
-
-  const handleLoadMore = () => {
-    setCurrentPage((prev) => prev + 1);
   };
+
+  const fetchSearchResults = async (query) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`https://api.jikan.moe/v4/anime?q=${query}`);
+      const data = await res.json();
+      setAnimeList(data.data || []);
+      setHasMore(false);
+    } catch (err) {
+      console.error("📛 Search error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoadMore = () => setCurrentPage((prev) => prev + 1);
 
   return (
     <>
@@ -50,12 +74,18 @@ function AnimeList() {
           ))}
         </div>
 
-        {hasMore && (
+        {!searchQuery && hasMore && (
           <div className="load-more-wrapper">
             <button className="load-more-btn" onClick={handleLoadMore} disabled={loading}>
               {loading ? "Loading..." : "Load More 🍡"}
             </button>
           </div>
+        )}
+
+        {searchQuery && !loading && animeList.length === 0 && (
+          <p style={{ textAlign: "center", color: "white", marginTop: "2rem" }}>
+            No results found for <strong>"{searchQuery}"</strong>
+          </p>
         )}
       </div>
 
@@ -69,7 +99,7 @@ function AnimeList() {
         .anime-page {
           width: 100vw;
           overflow-x: hidden;
-          background-color: #5a3c65;
+          background-color: #301738;
           padding-top: 90px;
           min-height: 100vh;
         }

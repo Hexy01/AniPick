@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { verifyToken } = require("../auth"); // assuming this exists
+const { verifyToken } = require("./auth"); // assuming this exists
 const Watchlist = require("../models/Watchlist");
 const Rating = require("../models/Rating");
 const Review = require("../models/Review");

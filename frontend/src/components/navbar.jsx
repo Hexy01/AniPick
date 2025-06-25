@@ -1,17 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
 
-function Navbar() {
-  const [username, setUsername] = useState(null);
+function Navbar({ username, setUsername }) {
   const [showSearch, setShowSearch] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  useEffect(() => {
-    const savedUsername = localStorage.getItem("username");
-    setUsername(savedUsername);
-  }, []);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -29,10 +27,61 @@ function Navbar() {
   };
 
   const scrollToGenres = () => {
-    const genreSection = document.getElementById("genre-section");
+    if (location.pathname === "/"){
+      const genreSection = document.getElementById("genre-section");
     if (genreSection) {
       genreSection.scrollIntoView({ behavior: "smooth" });
     }
+    } else {
+    // Not on Home → navigate with scroll param
+    navigate("/?scroll=genre");
+  } 
+  };
+
+  const triggerSearch = () => {
+    if (!searchQuery.trim()) return;
+    const encoded = encodeURIComponent(searchQuery.trim());
+    navigate(`/list?search=${encoded}`);
+    setShowSearch(false);
+    setSearchQuery("");
+    setShowSuggestions(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      triggerSearch();
+    }
+  };
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (searchQuery.trim().length === 0) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://api.jikan.moe/v4/anime?q=${searchQuery}&limit=5`);
+        const data = await res.json();
+        setSuggestions(data.data || []);
+        setShowSuggestions(true);
+      } catch (err) {
+        console.error("Live suggestions failed", err);
+      }
+    };
+
+    const debounce = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  const highlightMatch = (text, query) => {
+    const regex = new RegExp(`(${query})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? <mark key={i}>{part}</mark> : part
+    );
   };
 
   return (
@@ -53,7 +102,7 @@ function Navbar() {
               {showDropdown && (
                 <div className="dropdown">
                   <div className="dropdown-item">Hi, {username}!</div>
-                  <div className="dropdown-item" onClick={() => navigate("/profile")}>View Profile</div>
+                  <div className="dropdown-item" onClick={() => { setShowDropdown(false); navigate("/profile"); }}>View Profile</div>
                   <div className="dropdown-item" onClick={handleLogout}>Logout</div>
                 </div>
               )}
@@ -67,22 +116,45 @@ function Navbar() {
       {showSearch && (
         <div className="search-container">
           <div className="search-wrapper">
-            <button className="filter-btn">🔽</button>
-            <input type="text" placeholder="Search anime..." />
-            <button className="search-icon"><FaSearch /></button>
+            <button className="filter-btn"> 🔽 </button>
+            <input
+              type="text"
+              placeholder="Search anime..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button className="search-icon" onClick={triggerSearch}><FaSearch /></button>
           </div>
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="suggestions-dropdown">
+              {suggestions.map((anime) => (
+                <li
+                  key={anime.mal_id}
+                  onClick={() => {
+                    navigate(`/anime/${anime.mal_id}`);
+                    setShowSearch(false);
+                    setSearchQuery("");
+                    setShowSuggestions(false);
+                  }}
+                >
+                  {highlightMatch(anime.title, searchQuery)}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
       <style>{`
         .navbar {
-          background-color: #2C2543;
-          padding: 12px 20px;
+          background-color: #220a29;
+          padding: 12px 17px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           font-family: 'Segoe UI', sans-serif;
-          position: fixed;
+          position: relative;
           top: 0;
           z-index: 1000;
           width: 100%;
@@ -138,11 +210,13 @@ function Navbar() {
 
         .search-container {
           width: 100%;
-          background-color: #2C2543;
+          background-color: #220a29;
           padding: 10px 20px;
           display: flex;
-          justify-content: center;
-          margin-top: 60px;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 52px;
+          position: relative;
         }
 
         .search-wrapper {
@@ -175,7 +249,7 @@ function Navbar() {
         .filter-btn {
           background-color: #E5E5E5;
           border: none;
-          padding: 0 12px;
+          padding: 8px 12px;
           font-size: 1.2rem;
           height: 100%;
           cursor: pointer;
@@ -217,6 +291,36 @@ function Navbar() {
 
         .dropdown-item:hover {
           background-color: #f5f5f5;
+        }
+
+        .suggestions-dropdown {
+          position: absolute;
+          top: 100%;
+          background-color: white;
+          border: 1px solid #ccc;
+          width: 100%;
+          max-width: 700px;
+          border-radius: 0 0 8px 8px;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          z-index: 1000;
+        }
+
+        .suggestions-dropdown li {
+          padding: 10px 16px;
+          cursor: pointer;
+          font-size: 0.95rem;
+        }
+
+        .suggestions-dropdown li:hover {
+          background-color: #ffe0ea;
+        }
+
+        .suggestions-dropdown mark {
+          background-color: #ffc6db;
+          font-weight: bold;
+          padding: 0 2px;
         }
       `}</style>
     </>

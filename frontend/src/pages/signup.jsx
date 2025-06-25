@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 
-function Signup() {
+function Signup({ setUsername }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [error, setError] = useState("");
@@ -12,20 +12,20 @@ function Signup() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await axios.post("/api/auth/signup", form);
-    if (res.status === 201 || res.status === 200) {
-      const { token, username } = res.data;
-localStorage.setItem("token", token);
-localStorage.setItem("username", username);
-      navigate("/"); // go to home page
+    e.preventDefault();
+    try {
+      const res = await axios.post("/api/auth/signup", form);
+      if (res.status === 201 || res.status === 200) {
+        const { token, username } = res.data;
+        localStorage.setItem("token", token);
+        localStorage.setItem("username", username);
+        setUsername(username); // ✅ Update parent immediately
+        navigate("/");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Signup failed.");
     }
-  } catch (err) {
-    setError(err.response?.data?.message || "Signup failed.");
-  }
-};
-
+  };
 
   return (
     <>
@@ -49,37 +49,39 @@ localStorage.setItem("username", username);
       </div>
 
       <style>{`
-          .navbar {
-    width: 100vw;           /* Full screen width */
-    margin: 0 auto;         /* Center it */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-sizing: border-box; /* Important for padding to behave */
-  }
+        .navbar {
+          width: 100vw;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-sizing: border-box;
+        }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
 
-  body {
-    margin: 0;
-    padding: 0;
-  }
+        body {
+          margin: 0;
+          padding: 0;
+        }
+
         .signup-wrapper {
           min-height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
-          background-color:#473d57;
+          background-color: #39163d;
           padding: 20px;
         }
 
         .signup-box {
           background: #ffffff;
           padding: 40px;
+          margin-top: 40px;
           border-radius: 20px;
           box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
           max-width: 400px;

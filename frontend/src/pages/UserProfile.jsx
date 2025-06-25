@@ -1,149 +1,189 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-function UserProfile() {
-  const [activeTab, setActiveTab] = useState("watchlist");
+const UserProfile = () => {
+  const [watchlist, setWatchlist] = useState([]);
+  const [filteredStatus, setFilteredStatus] = useState(() => {
+    return localStorage.getItem("anipick-filter") || "All";
+  });
 
-  const tabs = [
-    { key: "watchlist", label: "📺 Watchlist" },
-    { key: "reviews", label: "✍️ Reviews" },
-    { key: "favorites", label: "🌟 Favorites" },
-  ];
+  const username = localStorage.getItem("username");
 
-  const subWatchlistTabs = ["Watching", "Completed", "Plan to Watch"];
+  const fetchWatchlist = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/watchlist/${username}`);
+      setWatchlist(res.data || []);
+      console.log("📦 Watchlist data:", res.data);
+    } catch (err) {
+      console.error("❌ Failed to fetch watchlist", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWatchlist();
+  }, []);
+
+  const statuses = ["All", "Watching", "Completed", "Plan to Watch", "My Reviews", "Favorites"];
+
+const filteredAnime = watchlist.filter((entry) => {
+  if (!entry.anime || !entry.anime.status) return false;
+
+  if (filteredStatus === "All") return true;
 
   return (
-    <div className="profile-wrapper">
-      <div className="profile-header">
-        <img
-          src="https://i.pinimg.com/564x/c6/5d/b3/c65db3ff80e8a379b04b78c6e74cf34d.jpg"
-          alt="Profile"
-          className="profile-icon"
-        />
-        <h1 className="username">Hi, Sakura🌸</h1>
-      </div>
+    ["Watching", "Completed", "Plan to Watch"].includes(filteredStatus) &&
+    entry.anime.status.toLowerCase() === filteredStatus.toLowerCase()
+  );
+});
 
-      <div className="tab-buttons">
-        {tabs.map((tab) => (
+  const removeAnime = async (animeId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/watchlist/${animeId}`);
+      setWatchlist((prev) => prev.filter((a) => a._id !== animeId));
+    } catch (err) {
+      console.error("❌ Error removing anime", err);
+    }
+  };
+
+  const styles = {
+    page: {
+      width: "100vw",
+      minHeight: "100vh",
+      backgroundColor: "#301738",
+      padding: "5rem 2rem 2rem",
+      color: "#fff",
+      boxSizing: "border-box",
+      overflowY: "auto",
+    },
+    header: {
+      fontSize: "2.2rem",
+      fontWeight: "bold",
+      marginBottom: "2rem",
+      color: "#ffb5d8",
+      textAlign: "center",
+    },
+    tabs: {
+      display: "flex",
+      justifyContent: "center",
+      gap: "0.5rem",
+      marginBottom: "2.5rem",
+      flexWrap: "wrap",
+    },
+    tabButton: (active) => ({
+      padding: "0.5rem 1rem",
+      borderRadius: "8px",
+      backgroundColor: active ? "#ff9ebc" : "#2a253f",
+      color: active ? "#1e1b2e" : "#ccc",
+      fontWeight: "500",
+      border: "none",
+      cursor: "pointer",
+      transition: "all 0.3s ease",
+      transform: active ? "scale(1.05)" : "scale(1)",
+    }),
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+      gap: "1.2rem",
+    },
+    card: {
+      backgroundColor: "#2a253f",
+      borderRadius: "12px",
+      padding: "0.75rem",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+      transition: "transform 0.3s ease",
+    },
+    image: {
+      width: "100%",
+      height: "200px",
+      objectFit: "cover",
+      borderRadius: "8px",
+      marginBottom: "0.5rem",
+    },
+    title: {
+      fontSize: "0.95rem",
+      textAlign: "center",
+      fontWeight: "500",
+      color: "#fff",
+      marginBottom: "0.25rem",
+    },
+    removeBtn: {
+      fontSize: "0.75rem",
+      color: "#ff6b81",
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+    },
+  };
+
+  return (
+    <div style={styles.page}>
+      <h1 style={styles.header}>Hey, {username}!</h1>
+
+      <div style={styles.tabs}>
+        {statuses.map((status) => (
           <button
-            key={tab.key}
-            className={`tab-btn ${activeTab === tab.key ? "active" : ""}`}
-            onClick={() => setActiveTab(tab.key)}
+            key={status}
+            onClick={() => {
+              setFilteredStatus(status);
+              localStorage.setItem("anipick-filter", status);
+            }}
+            style={styles.tabButton(filteredStatus === status)}
           >
-            {tab.label}
+            {status}
           </button>
         ))}
       </div>
 
-      <div className="tab-content">
-        {activeTab === "watchlist" && (
-          <div className="sub-tab-list">
-            {subWatchlistTabs.map((cat) => (
-              <div key={cat} className="sub-tab">
-                <h3>{cat}</h3>
-                <p>💤 No anime added yet.</p>
-              </div>
-            ))}
-          </div>
-        )}
+      {["My Reviews", "Favorites"].includes(filteredStatus) ? (
+        <p style={{ textAlign: "center", fontStyle: "italic" }}>
+          {filteredStatus} feature coming soon! ✨
+        </p>
+      ) : filteredAnime.length === 0 ? (
+        <p
+          style={{
+            gridColumn: "1 / -1",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "200px",
+            fontStyle: "italic",
+            fontSize: "1rem",
+            color: "#ccc",
+            textAlign: "center",
+          }}
+        >
+          No anime found in this category!
+        </p>
+      ) : (
+   <div style={styles.grid}>
+  {filteredAnime.map((item) => {
+    const anime = item.anime; // ✅ access nested anime data
 
-        {activeTab === "reviews" && (
-          <div className="reviews-section">
-            <p>✍️ You haven’t written any reviews yet!</p>
-          </div>
-        )}
-
-        {activeTab === "favorites" && (
-          <div className="favorites-section">
-            <p>💖 No favorites added yet.</p>
-          </div>
-        )}
+    return (
+      <div
+        key={item._id}
+        style={styles.card}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        <img src={anime.image} alt={anime.title} style={styles.image} />
+        <h3 style={styles.title}>{anime.title}</h3>
+        <button
+          style={styles.removeBtn}
+          onClick={() => removeAnime(item._id)}
+        >
+          Remove
+        </button>
       </div>
-
-      <style>{`
-        .profile-wrapper {
-          background-color: #2C2543;
-          min-height: 100vh;
-          padding: 100px 20px 40px;
-          color: #FFEFF4;
-          font-family: 'Segoe UI', sans-serif;
-        }
-
-        .profile-header {
-          text-align: center;
-          margin-bottom: 40px;
-        }
-
-        .profile-icon {
-          width: 120px;
-          height: 120px;
-          border-radius: 50%;
-          object-fit: cover;
-          border: 4px solid #FFB3C6;
-          margin-bottom: 12px;
-        }
-
-        .username {
-          font-size: 1.8rem;
-          color: #FFB3C6;
-        }
-
-        .tab-buttons {
-          display: flex;
-          justify-content: center;
-          gap: 20px;
-          margin-bottom: 30px;
-          flex-wrap: wrap;
-        }
-
-        .tab-btn {
-          background-color: #FF8BA7;
-          color: #2C2543;
-          border: none;
-          padding: 10px 16px;
-          font-weight: bold;
-          border-radius: 12px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .tab-btn.active,
-        .tab-btn:hover {
-          background-color: #f67290;
-        }
-
-        .tab-content {
-          max-width: 1000px;
-          margin: auto;
-        }
-
-        .sub-tab-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 20px;
-        }
-
-        .sub-tab {
-          background: #3D2E50;
-          border-radius: 16px;
-          padding: 20px;
-        }
-
-        .sub-tab h3 {
-          color: #FFB3C6;
-          margin-bottom: 10px;
-        }
-
-        .reviews-section,
-        .favorites-section {
-          background: #3D2E50;
-          padding: 30px;
-          border-radius: 16px;
-          text-align: center;
-          font-size: 1.1rem;
-        }
-      `}</style>
+    );
+  })}
+</div>
+      )}
     </div>
   );
-}
+};
 
 export default UserProfile;

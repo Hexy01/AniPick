@@ -35,6 +35,7 @@ function GenrePage() {
     "shoujo": 25,
     "ShoujoAi": 26,
     "Shounen": 27,
+    "Samurai": 21,
     "ShounenAi": 28,
     "Thriller": 41
     // Add more if needed
@@ -83,7 +84,7 @@ function GenrePage() {
   return (
     <>
       <div className="genre-page">
-        <h1>{genreName} Anime <span>🍥</span></h1>
+        <h1>{genreName} Anime <span></span></h1>
 
         {loading && animes.length === 0 ? (
           <p className="loading">Loading {genreName} anime... 🍡</p>
@@ -127,7 +128,7 @@ function GenrePage() {
 
         .genre-page {
           padding: 100px 5% 40px;
-          background-color: #64416e;
+          background-color: #301738;
           min-height: 100vh;
           color: white;
           font-family: 'Segoe UI', sans-serif;

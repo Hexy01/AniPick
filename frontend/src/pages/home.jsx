@@ -1,64 +1,100 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "../api/axios";
 
 function Home() {
   const [trendingAnime, setTrendingAnime] = useState([]);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    fetchTrendingAnime();
+ const fetchTrendingAnime = async () => {
+  try {
+    const res = await fetch("https://api.jikan.moe/v4/seasons/now");
+    const data = await res.json();
+    setTrendingAnime(data.data.slice(0, 12));
+  } catch (err) {
+    console.error("Failed to fetch trending anime:", err);
+  }
+};    fetchTrendingAnime();
   }, []);
 
-  const fetchTrendingAnime = async () => {
-    try {
-      const res = await fetch("https://api.jikan.moe/v4/top/anime");
-      const data = await res.json();
-      setTrendingAnime(data.data.slice(0, 4));
-    } catch (err) {
-      console.error("Failed to fetch trending anime:", err);
+  useEffect(() => {
+    const scrollTarget = searchParams.get("scroll");
+    if (scrollTarget === "genre") {
+      const section = document.getElementById("genre-section");
+      if (section) {
+        setTimeout(() => {
+          section.scrollIntoView({ behavior: "smooth" });
+        }, 600);
+      }
     }
-  };
+  }, [searchParams]);
 
   const handleGenreClick = (genre) => {
     navigate(`/genre/${genre.toLowerCase()}`);
   };
 
+  const genreList = [
+    "Action", "Adventure", "Comedy", "Drama", "Ecchi", "Fantasy", "Harem",
+    "Horror", "Isekai", "Josei", "Kids", "Music", "Mystery", "Psychological",
+    "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo", "Shoujo Ai",
+    "Shounen", "Shounen Ai", "Slice of Life", "Thriller"
+  ];
+
   return (
     <>
       <div className="homepage">
         {/* Hero Section */}
-        <section className="hero">
-          <div className="hero-text">
-            <h1>AniPick 🍥</h1>
-            <p> Save, Track and Find your next binge</p>
-            <Link to="/signup" className="cta-btn">Join the Club</Link>
-          </div>
-          <div className="hero-img">
-            <img src="https://i.pinimg.com/736x/51/2c/9a/512c9a9bfd71ae7ab6b583dca74c318f.jpg" alt="anime hero" />
+        <section className="hero-section">
+          <img
+            src="
+https://wallpapercat.com/w/middle-retina/8/a/c/182832-2339x1654-desktop-hd-demon-slayer-kimetsu-no-yaiba-wallpaper-photo.jpg
+"
+            alt="anime background"
+            className="hero-background"
+          />
+          <div className="hero-overlay">
+            <div className="hero-content">
+              <h1>AniPick</h1>
+              <p>Save, Track and Find your next binge</p>
+              <Link to="/signup" className="cta-button">Join the Club</Link>
+            </div>
           </div>
         </section>
 
-        {/* Featured Anime Section */}
+        {/* Trending Section */}
         <section className="featured">
-          <h2>✨ Trending Picks</h2>
+          <div className="fade-top"></div>
+          <h2 className="trending-title">✨ Trending Picks</h2>
           <div className="anime-cards">
             {trendingAnime.map((anime) => (
               <div className="anime-card" key={anime.mal_id}>
-                <img src={anime.images.jpg.image_url} alt={anime.title} />
-                <h3>{anime.title}</h3>
-                <p>{anime.synopsis?.substring(0, 80) || "No description available..."}</p>
-                <p>⭐ {anime.score || "N/A"}</p>
+                <div className="card-img-wrapper">
+                  <img src={anime.images.jpg.image_url} alt={anime.title} />
+                </div>
+                <div className="card-details">
+                  <h3>{anime.title}</h3>
+                  <p>{anime.synopsis?.substring(0, 80) || "No description available..."}</p>
+                  <span className="score">⭐ {anime.score || "N/A"}</span>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
         {/* Genre Section */}
-        <section id="genre-section" className="genre-section">
+        <section className="genre-section" id="genre-section">
           <h2>Find Your Favorite Genre</h2>
           <div className="genre-grid">
-            {["Action", "Adventure", "Comedy", "Drama", "Ecchi", "Fantasy", "Harem", "Horror", "Isekai", "Josei", "Kids", "Music" , "Mystery","Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo", "Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life","Thriller"].map((genre, idx) => (
-              <div key={idx} className="genre-item" onClick={() => handleGenreClick(genre)}>{genre}</div>
+            {genreList.map((genre, idx) => (
+              <div
+                key={idx}
+                className="genre-item"
+                onClick={() => handleGenreClick(genre)}
+              >
+                {genre}
+              </div>
             ))}
           </div>
         </section>
@@ -95,56 +131,96 @@ function Home() {
           width: 100vw;
         }
 
-        .hero {
+        .hero-section {
+          position: relative;
+          height: 100vh;
+          overflow: hidden;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 80px 5%;
-          background: #553e5c;
+          justify-content: flex-end;
+          background: #1e1e2f;
+        }
+
+        .hero-background {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          height: 120vh;
+          width: 100vw;
+          object-fit: cover;
+          z-index: 1;
+          filter: brightness(0.65);
+          mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+        }
+
+        .hero-overlay {
+          position: relative;
+          z-index: 2;
           width: 100%;
+          max-width: 1280px;
+          padding: 2rem;
+          box-sizing: border-box;
         }
 
-        .hero-text {
-          max-width: 50%;
+        .hero-content {
+          margin-right: 8%;
+          max-width: 500px;
+          text-align: right;
+          color: #fff;
+          animation: fadeInUp 1s ease-in-out;
         }
 
-        .hero-text h1 {
-          font-size: 3.5rem;
-          margin-bottom: 10px;
+        .hero-content h1 {
+          font-size: 3.2rem;
+          color: #ffe3f1;
+          margin-bottom: 0.5rem;
         }
 
-        .hero-text p {
-          font-size: 1.2rem;
-          margin-bottom: 20px;
+        .hero-content p {
+          font-size: 1.4rem;
+          color: #fcd5ec;
+          margin-bottom: 1.5rem;
         }
 
-        .cta-btn {
+        .cta-button {
           padding: 12px 24px;
-          background-color: #FF6F91;
+          background-color: #ff8ba7;
           color: white;
-          border: none;
-          border-radius: 30px;
-          text-decoration: none;
           font-weight: bold;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          border-radius: 8px;
+          text-decoration: none;
+          font-size: 1.1rem;
+          transition: background 0.3s ease;
         }
 
-        .hero-img img {
-          width: 500px;
-          height: 500px;
-          border-radius: 0px;
+        .cta-button:hover {
+          background-color: #ff5e84;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .featured {
-          padding: 60px 5%;
-          background-color: #4f3d54;
+          padding: 100px 5% 60px;
+          background: #35213b;
           width: 100%;
         }
 
-        .featured h2 {
+        .trending-title {
           font-size: 2.2rem;
           margin-bottom: 30px;
           text-align: center;
+          color: #ffe3f1;
         }
 
         .anime-cards {
@@ -158,7 +234,12 @@ function Home() {
           border-radius: 16px;
           padding: 16px;
           text-align: center;
-          box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+          box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+          transition: transform 0.3s ease;
+        }
+
+        .anime-card:hover {
+          transform: translateY(-5px);
         }
 
         .anime-card img {
@@ -168,7 +249,7 @@ function Home() {
         }
 
         .genre-section {
-          background-color: #44304a;
+          background-color: #2d1b33;
           color: #eae1ed;
           padding: 60px 5%;
           width: 100%;
@@ -196,7 +277,7 @@ function Home() {
 
         .about, .contact {
           padding: 60px 5%;
-          background-color:  #553e5c; ;
+          background-color: #35213b;
           text-align: center;
           width: 100%;
         }
@@ -233,9 +314,9 @@ function Home() {
         .footer {
           padding: 20px;
           text-align: center;
-          background-color: #FFE5EC;
+          background-color: #403045;
           font-size: 0.9rem;
-          color: #6B4E71;
+          color: #FFB3C6;
           width: 100%;
         }
       `}</style>

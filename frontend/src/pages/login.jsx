@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 
-function Login() {
+function Login({ setUsername }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -18,15 +18,13 @@ function Login() {
       const { token, username } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
-
-      if (token) {
-        localStorage.setItem("token", token); // save token for future use
-        navigate("/"); // redirect to home
-      }
+      setUsername(username); // ✅ trigger navbar update
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed.");
     }
   };
+
   return (
     <>
       <div className="login-wrapper">
@@ -45,14 +43,13 @@ function Login() {
           </p>
         </div>
       </div>
-
       <style>{`
         .login-wrapper {
           min-height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
-          background-color:#473d57;
+          background-color: #39163d;
           padding: 20px;
         }
 
