@@ -54,7 +54,7 @@ function AnimeDetails() {
       setMessage("✅ Added to your " + selectedStatus + " list!");
     } catch (err) {
       console.error(err);
-      setMessage("❌ Failed to add anime to your list.");
+      setMessage("Failed to add anime to your list.");
     }
   }
 

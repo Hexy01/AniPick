@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { FaSearch } from "react-icons/fa";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { FaSearch, FaUserCircle } from "react-icons/fa";
 
 function Navbar({ username, setUsername }) {
   const [showSearch, setShowSearch] = useState(false);
@@ -9,8 +9,10 @@ function Navbar({ username, setUsername }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const dropdownRef = useRef(null);
+  const avatarRef = useRef(null);
   const navigate = useNavigate();
-
+  const location = useLocation();
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -27,15 +29,14 @@ function Navbar({ username, setUsername }) {
   };
 
   const scrollToGenres = () => {
-    if (location.pathname === "/"){
+    if (location.pathname === "/") {
       const genreSection = document.getElementById("genre-section");
-    if (genreSection) {
-      genreSection.scrollIntoView({ behavior: "smooth" });
-    }
+      if (genreSection) {
+        genreSection.scrollIntoView({ behavior: "smooth" });
+      }
     } else {
-    // Not on Home → navigate with scroll param
-    navigate("/?scroll=genre");
-  } 
+      navigate("/?scroll=genre");
+    }
   };
 
   const triggerSearch = () => {
@@ -76,6 +77,29 @@ function Navbar({ username, setUsername }) {
     return () => clearTimeout(debounce);
   }, [searchQuery]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        avatarRef.current &&
+        !avatarRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
+
   const highlightMatch = (text, query) => {
     const regex = new RegExp(`(${query})`, "gi");
     const parts = text.split(regex);
@@ -88,7 +112,8 @@ function Navbar({ username, setUsername }) {
     <>
       <nav className="navbar">
         <div className="left">
-          <Link to="/" className="logo">AniPick 🍡</Link>
+         <Link className="logo">AniPick🍡</Link>
+
         </div>
 
         <div className="nav-links">
@@ -98,9 +123,11 @@ function Navbar({ username, setUsername }) {
 
           {username ? (
             <div className="profile-container">
-              <button className="avatar-btn" onClick={toggleDropdown} title="Profile">🧁</button>
+              <button className="avatar-btn" onClick={toggleDropdown} title="Profile" ref={avatarRef}>
+                <FaUserCircle />
+              </button>
               {showDropdown && (
-                <div className="dropdown">
+                <div className="dropdown" ref={dropdownRef}>
                   <div className="dropdown-item">Hi, {username}!</div>
                   <div className="dropdown-item" onClick={() => { setShowDropdown(false); navigate("/profile"); }}>View Profile</div>
                   <div className="dropdown-item" onClick={handleLogout}>Logout</div>
@@ -123,6 +150,7 @@ function Navbar({ username, setUsername }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
+              autoFocus
             />
             <button className="search-icon" onClick={triggerSearch}><FaSearch /></button>
           </div>
@@ -149,12 +177,12 @@ function Navbar({ username, setUsername }) {
       <style>{`
         .navbar {
           background-color: #220a29;
-          padding: 12px 17px;
+          padding: 12px 30px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           font-family: 'Segoe UI', sans-serif;
-          position: relative;
+          position: fixed;
           top: 0;
           z-index: 1000;
           width: 100%;
@@ -165,6 +193,7 @@ function Navbar({ username, setUsername }) {
           font-weight: bold;
           color: #FFB3C6;
           text-decoration: none;
+          margin-left: -35px;
         }
 
         .nav-links {
@@ -172,6 +201,8 @@ function Navbar({ username, setUsername }) {
           gap: 24px;
           align-items: center;
           position: relative;
+          margin-left: -40px;
+          margin-right: 10px;
         }
 
         .nav-link {
@@ -209,14 +240,14 @@ function Navbar({ username, setUsername }) {
         }
 
         .search-container {
+          position: fixed;
+          top: 55px;
+          left: 0;
           width: 100%;
+          z-index: 1001;
           background-color: #220a29;
-          padding: 10px 20px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin-top: 52px;
-          position: relative;
+          padding: 10px 30px;
+          border-radius: 0;
         }
 
         .search-wrapper {
@@ -225,7 +256,6 @@ function Navbar({ username, setUsername }) {
           display: flex;
           align-items: center;
           width: 100%;
-          max-width: 700px;
           overflow: hidden;
         }
 
@@ -294,17 +324,15 @@ function Navbar({ username, setUsername }) {
         }
 
         .suggestions-dropdown {
-          position: absolute;
-          top: 100%;
+          width: 100%;
           background-color: white;
           border: 1px solid #ccc;
-          width: 100%;
-          max-width: 700px;
           border-radius: 0 0 8px 8px;
           list-style: none;
           padding: 0;
-          margin: 0;
-          z-index: 1000;
+          margin: 4px 0 0 0;
+          max-height: 300px;
+          overflow-y: auto;
         }
 
         .suggestions-dropdown li {

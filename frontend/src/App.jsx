@@ -21,7 +21,7 @@ function App() {
     <BrowserRouter>
       <Navbar username={username} setUsername={setUsername} />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Home/>} />
         <Route path="/login" element={<Login setUsername={setUsername} />} />
         <Route path="/signup" element={<Signup setUsername={setUsername} />} />
         <Route path="/list" element={<AnimeList />} />
