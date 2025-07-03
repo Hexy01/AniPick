@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const UserProfile = () => {
   const [watchlist, setWatchlist] = useState([]);
@@ -8,6 +9,7 @@ const UserProfile = () => {
   });
 
   const username = localStorage.getItem("username");
+  const navigate = useNavigate();
 
   const fetchWatchlist = async () => {
     try {
@@ -23,18 +25,17 @@ const UserProfile = () => {
     fetchWatchlist();
   }, []);
 
-  const statuses = ["All", "Watching", "Completed", "Plan to Watch", "My Reviews", "Favorites"];
+  const statuses = ["All", "Watching", "Completed", "Plan to Watch", "Favorites"];
 
 const filteredAnime = watchlist.filter((entry) => {
   if (!entry.anime || !entry.anime.status) return false;
 
   if (filteredStatus === "All") return true;
+  if (filteredStatus === "Favorites") return entry.anime.favorite === true;
 
-  return (
-    ["Watching", "Completed", "Plan to Watch"].includes(filteredStatus) &&
-    entry.anime.status.toLowerCase() === filteredStatus.toLowerCase()
-  );
+  return entry.anime.status.toLowerCase() === filteredStatus.toLowerCase();
 });
+
 
   const removeAnime = async (animeId) => {
     try {
@@ -61,6 +62,7 @@ const filteredAnime = watchlist.filter((entry) => {
       marginBottom: "2rem",
       color: "#ffb5d8",
       textAlign: "center",
+      marginTop: "-15px",
     },
     tabs: {
       display: "flex",
@@ -94,6 +96,7 @@ const filteredAnime = watchlist.filter((entry) => {
       alignItems: "center",
       boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
       transition: "transform 0.3s ease",
+      cursor: "pointer",
     },
     image: {
       width: "100%",
@@ -115,6 +118,7 @@ const filteredAnime = watchlist.filter((entry) => {
       background: "none",
       border: "none",
       cursor: "pointer",
+      marginTop: "4px",
     },
   };
 
@@ -137,9 +141,9 @@ const filteredAnime = watchlist.filter((entry) => {
         ))}
       </div>
 
-      {["My Reviews", "Favorites"].includes(filteredStatus) ? (
+      {filteredStatus === "Favorites" && filteredAnime.length === 0 ? (
         <p style={{ textAlign: "center", fontStyle: "italic" }}>
-          {filteredStatus} feature coming soon! ✨
+          No favorites yet! ❤️ Mark some anime as favorites to see them here.
         </p>
       ) : filteredAnime.length === 0 ? (
         <p
@@ -158,29 +162,33 @@ const filteredAnime = watchlist.filter((entry) => {
           No anime found in this category!
         </p>
       ) : (
-   <div style={styles.grid}>
-  {filteredAnime.map((item) => {
-    const anime = item.anime; // ✅ access nested anime data
+        <div style={styles.grid}>
+          {filteredAnime.map((item) => {
+            const anime = item.anime;
 
-    return (
-      <div
-        key={item._id}
-        style={styles.card}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-      >
-        <img src={anime.image} alt={anime.title} style={styles.image} />
-        <h3 style={styles.title}>{anime.title}</h3>
-        <button
-          style={styles.removeBtn}
-          onClick={() => removeAnime(item._id)}
-        >
-          Remove
-        </button>
-      </div>
-    );
-  })}
-</div>
+            return (
+              <div
+                key={item._id}
+                style={styles.card}
+                onClick={() => navigate(`/anime/${anime.id}`)}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              >
+                <img src={anime.image} alt={anime.title} style={styles.image} />
+                <h3 style={styles.title}>{anime.title}</h3>
+                <button
+                  style={styles.removeBtn}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card navigation
+                    removeAnime(item._id);
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

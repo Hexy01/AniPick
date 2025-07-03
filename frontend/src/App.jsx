@@ -16,7 +16,11 @@ function App() {
     const storedUsername = localStorage.getItem("username");
     if (storedUsername) setUsername(storedUsername);
   }, []);
-
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
   return (
     <BrowserRouter>
       <Navbar username={username} setUsername={setUsername} />

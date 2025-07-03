@@ -112,8 +112,14 @@ function Navbar({ username, setUsername }) {
     <>
       <nav className="navbar">
         <div className="left">
-         <Link className="logo">AniPick🍡</Link>
-
+        <Link
+  to="/"
+  className="logo"
+  onClick={(e) => {
+    if (location.pathname === "/") {
+      e.preventDefault(); // ⛔ stop default behavior
+      window.scrollTo({ top: 0, behavior: "smooth" }); // ✅ scroll to top
+    }}}>AniPick🍡</Link>
         </div>
 
         <div className="nav-links">
@@ -177,7 +183,7 @@ function Navbar({ username, setUsername }) {
       <style>{`
         .navbar {
           background-color: #220a29;
-          padding: 12px 30px;
+          padding: 8px 25px;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -241,7 +247,7 @@ function Navbar({ username, setUsername }) {
 
         .search-container {
           position: fixed;
-          top: 55px;
+          top: 50px;
           left: 0;
           width: 100%;
           z-index: 1001;
@@ -304,7 +310,7 @@ function Navbar({ username, setUsername }) {
           position: absolute;
           top: 42px;
           right: 0;
-          background-color: white;
+          background-color: #cfb1e3;
           color: #2C2543;
           border-radius: 8px;
           box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -320,7 +326,7 @@ function Navbar({ username, setUsername }) {
         }
 
         .dropdown-item:hover {
-          background-color: #f5f5f5;
+          background-color: #bc7ee6;
         }
 
         .suggestions-dropdown {

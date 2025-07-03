@@ -1,6 +1,10 @@
+// AnimeDetails.jsx
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 function AnimeDetails() {
   const { id } = useParams();
@@ -8,7 +12,11 @@ function AnimeDetails() {
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("Plan to Watch");
-  const [message, setMessage] = useState("");
+  const [rating] = useState(10);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [watchlist, setWatchlist] = useState([]);
+  const [isInList, setIsInList] = useState(false);
+
   const username = localStorage.getItem("username");
 
   useEffect(() => {
@@ -22,7 +30,11 @@ function AnimeDetails() {
     }
   }, [anime]);
 
-  async function fetchAnimeDetails() {
+  useEffect(() => {
+    if (username) fetchWatchlist();
+  }, [username]);
+
+  const fetchAnimeDetails = async () => {
     try {
       const res = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
       const data = await res.json();
@@ -32,13 +44,34 @@ function AnimeDetails() {
       console.error("Failed to fetch anime details", err);
       setLoading(false);
     }
-  }
+  };
 
-  async function handleAddToList() {
+  const fetchWatchlist = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/watchlist/${username}`);
+      const entries = res.data || [];
+      setWatchlist(entries);
+
+      const entry = entries.find((item) => item.anime && item.anime.id == id);
+      if (entry) {
+        setIsInList(true);
+        setSelectedStatus(entry.anime.status);
+        setIsFavorite(entry.anime.favorite);
+      } else {
+        setIsInList(false);
+        setIsFavorite(false);
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch watchlist", err);
+    }
+  };
+
+  const handleAddToList = async () => {
     if (!username) {
-  setMessage("Please log in to add to your list.");
-  return;
-}
+      toast.warn("⚠️ Please log in to add to your list.");
+      return;
+    }
+
     try {
       const payload = {
         username,
@@ -47,107 +80,155 @@ function AnimeDetails() {
           title: anime.title,
           image: anime.images.jpg.image_url,
           status: selectedStatus,
+          rating,
+          favorite: isFavorite,
         },
       };
 
       const res = await axios.post("http://localhost:5000/api/watchlist/add", payload);
-      setMessage("✅ Added to your " + selectedStatus + " list!");
+
+      if (res.data.exists) {
+        toast.info("You've already added this anime to your list.");
+      } else if (res.data.success) {
+        toast.success("Added to your " + selectedStatus + " list!");
+        fetchWatchlist();
+      } else {
+        toast.error("❌ Something went wrong while adding the anime.");
+      }
     } catch (err) {
       console.error(err);
-      setMessage("Failed to add anime to your list.");
+      toast.error("❌ Failed to add anime to your list.");
     }
-  }
+  };
+
+  const handleRemoveFromList = async () => {
+    try {
+      const entry = watchlist.find((item) => item.anime && item.anime.id == id);
+      if (!entry) {
+        toast.warn("⚠️ Anime not found in your list.");
+        return;
+      }
+      await axios.delete(`http://localhost:5000/api/watchlist/${entry._id}`);
+      toast.success("❌ Removed from your list.");
+      fetchWatchlist();
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Failed to remove anime from your list.");
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!username || !anime) {
+      toast.warn("⚠️ User or Anime data is missing.");
+      return;
+    }
+
+    try {
+      const entry = watchlist.find((item) => item.anime && item.anime.id == anime.mal_id);
+
+      if (!entry) {
+        toast.error("❌ Anime not found in your list. Please add it first.");
+        return;
+      }
+
+      const res = await axios.patch(
+        `http://localhost:5000/api/watchlist/favorite/${username}/${anime.mal_id}`
+      );
+
+      if (res.data.success) {
+        const newFavoriteStatus = res.data.favorite;
+        setIsFavorite(newFavoriteStatus);
+        toast(newFavoriteStatus ? "❤️ Added to your Favorites!" : "❌ Removed from your Favorites.");
+      } else {
+        toast.error("❌ Failed to update favorite status.");
+      }
+    } catch (err) {
+      console.error("Favorite toggle failed", err);
+      toast.error("❌ Failed to update favorite status.");
+    }
+  };
 
   return (
     <>
       <div className="page-wrapper">
+        <ToastContainer position="top-center" autoClose={2500} />
         <div className="anime-details">
-          <div className={`details-grid ${!loading ? "loaded" : ""}`}>
-            {loading ? (
-              <>
-                <div className="anime-img skeleton-box" />
-                <div className="details-info">
-                  <h1 className="skeleton-box short" />
-                  <p className="skeleton-box" />
-                  <p className="skeleton-box" />
-                  <div className="details-meta">
-                    <p className="skeleton-box" />
-                    <p className="skeleton-box" />
-                  </div>
-                  <div className="genres">
-                    <span className="skeleton-box tiny" />
-                    <span className="skeleton-box tiny" />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <img src={anime.images.jpg.image_url} alt={anime.title} className="anime-img" />
+          {loading ? (
+            <div className="loading">Loading...</div>
+          ) : (
+            <div className="content-wrapper">
+              <div className="anime-img-wrapper">
+                <img
+                  src={anime.images.jpg.image_url}
+                  alt={anime.title}
+                  className="anime-img"
+                />
 
-                <div className="details-info">
-                  <h1>{anime.title}</h1>
-                  <p className="synopsis">{anime.synopsis || "No synopsis available."}</p>
-
-                  <div className="details-meta">
-                    <p><strong>Episodes:</strong> {anime.episodes || "?"}</p>
-                    <p><strong>Score:</strong> ⭐ {anime.score || "N/A"}</p>
-                    <p><strong>Status:</strong> {anime.status}</p>
-                    <p><strong>Type:</strong> {anime.type}</p>
-                    <p><strong>Rating:</strong> {anime.rating}</p>
-                    <p><strong>Duration:</strong> {anime.duration}</p>
-                  </div>
-
-                  <div className="genres">
-                    {anime.genres.map((g) => (
-                      <span key={g.mal_id} className="genre-tag">{g.name}</span>
-                    ))}
-                  </div>
-
-                  {/* 🚀 Add to List Section Starts */}
-                  <div style={{ marginTop: "20px" }}>
-                    <label style={{ marginRight: "10px", fontWeight: "500" }}>Add to List:</label>
+                <div className="list-controls">
+                  <label>Add to List:</label>
+                  <div className="add-line">
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: "8px",
-                        marginRight: "10px",
-                        border: "none",
-                        background: "#FFB3C6",
-                        color: "#2C2543",
-                        fontWeight: "bold"
-                      }}
                     >
                       <option value="Watching">Watching</option>
                       <option value="Completed">Completed</option>
                       <option value="Plan to Watch">Plan to Watch</option>
                     </select>
-                    <button
-                      onClick={handleAddToList}
+
+                    <span
+                      onClick={handleFavoriteToggle}
+                      title="Toggle Favorite"
                       style={{
-                        backgroundColor: "#FF8BA7",
-                        color: "white",
-                        padding: "6px 16px",
-                        border: "none",
-                        borderRadius: "8px",
-                        fontWeight: "bold",
-                        cursor: "pointer"
+                        marginLeft: "10px",
+                        marginTop: "10px",
+                        cursor: "pointer",
+                        fontSize: "1.3rem",
                       }}
                     >
-                      Add to List
-                    </button>
-                    {message && (
-                      <p style={{ marginTop: "8px", color: "#FFB3C6", fontWeight: 500 }}>
-                        {message}
-                      </p>
-                    )}
+                      {isFavorite ? (
+                        <FaHeart color="#FF8BA7" />
+                      ) : (
+                        <FaRegHeart color="#FF8BA7" />
+                      )}
+                    </span>
                   </div>
-                  {/* 🚀 Add to List Section Ends */}
+
+                  {isInList ? (
+                    <button className="add-btn-small" onClick={handleRemoveFromList}>
+                      Remove from List
+                    </button>
+                  ) : (
+                    <button className="add-btn-small" onClick={handleAddToList}>
+                      Add Anime
+                    </button>
+                  )}
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+
+              <div className="details-info">
+                <h1>{anime.title}</h1>
+                <p className="synopsis">{anime.synopsis || "No synopsis available."}</p>
+
+                <div className="details-meta">
+                  <p><strong>Episodes:</strong> {anime.episodes || "?"}</p>
+                  <p><strong>Score:</strong> ⭐ {anime.score || "N/A"}</p>
+                  <p><strong>Status:</strong> {anime.status}</p>
+                  <p><strong>Type:</strong> {anime.type}</p>
+                  <p><strong>Rating:</strong> {anime.rating}</p>
+                  <p><strong>Duration:</strong> {anime.duration}</p>
+                </div>
+
+                <div className="genres">
+                  {anime.genres.map((g) => (
+                    <span key={g.mal_id} className="genre-tag">
+                      {g.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {!loading && anime?.trailer?.embed_url && showTrailer && (
             <div className="trailer-section">
@@ -164,83 +245,58 @@ function AnimeDetails() {
       </div>
 
       <style>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        html, body {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          overflow-x: hidden;
-        }
-
         .page-wrapper {
           background-color: #301738;
-          width: 100%;
           min-height: 100vh;
-        }
-
-        .anime-details {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 100px 20px 40px;
           color: white;
           font-family: 'Segoe UI', sans-serif;
         }
-
-        .loading {
-          text-align: center;
-          font-size: 1.2rem;
-          padding: 80px 0;
-          color: #FF8BA7;
+        .anime-details {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 80px 20px 40px;
         }
-
-        .details-grid {
+        .content-wrapper {
           display: flex;
           flex-direction: column;
-          gap: 20px;
-          opacity: 0;
-          transition: opacity 0.3s ease-in-out;
+          gap: 30px;
         }
-
-        .details-grid.loaded {
-          opacity: 1;
+        @media (min-width: 768px) {
+          .content-wrapper {
+            flex-direction: row;
+          }
         }
-
+        .anime-img-wrapper {
+          flex-shrink: 0;
+        }
         .anime-img {
-          width: 240px;
-          height: 340px;
-          max-width: 200px;
-          border-radius: 16px;
+          width: 180px;
+          height: 260px;
+          border-radius: 12px;
           box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-          margin-bottom: 20px;
         }
-
+        .details-info {
+          flex: 1;
+        }
         .details-info h1 {
           font-size: 2rem;
           margin-bottom: 10px;
           color: #FFB3C6;
         }
-
         .synopsis {
           margin: 10px 0 20px;
-          font-size: 1rem;
-          line-height: 1.5;
+          line-height: 1.6;
           color: #eae1ed;
         }
-
         .details-meta p {
           margin: 6px 0;
         }
-
         .genres {
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
-          margin-top: 10px;
+          margin: 15px 0;
         }
-
         .genre-tag {
           background-color: #FFB3C6;
           color: #2C2543;
@@ -249,76 +305,52 @@ function AnimeDetails() {
           font-size: 0.85rem;
           font-weight: bold;
         }
-
+        .list-controls {
+          margin-top: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .add-line {
+          display: flex;
+          align-items: center;
+        }
+        .list-controls select {
+          margin-top: 10px;
+          padding: 6px 10px;
+          border-radius: 8px;
+          border: none;
+          background: #FFB3C6;
+          color: #2C2543;
+          font-weight: bold;
+        }
+        .add-btn-small {
+          background-color: #FF8BA7;
+          color: white;
+          padding: 4px 12px;
+          border: none;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 0.9rem;
+          margin-top: 6px;
+          margin-left: 12px;
+          cursor: pointer;
+          width: fit-content;
+        }
         .trailer-section {
           margin-top: 40px;
-          transition: opacity 0.3s ease;
         }
-
         .trailer-section h2 {
           margin-bottom: 16px;
           font-size: 1.5rem;
           color: #FF8BA7;
         }
-
         .trailer {
           width: 100%;
           max-width: 700px;
           height: 400px;
           border: none;
           border-radius: 10px;
-        }
-
-        /* Skeleton Loading */
-        .skeleton-box {
-          background: linear-gradient(90deg, #bbb, #ddd, #bbb);
-          background-size: 200% 100%;
-          animation: fadeIn 0.2s ease-in, shimmer 1.2s infinite;
-          border-radius: 8px;
-          margin-bottom: 10px;
-          height: 20px;
-        }
-
-        .skeleton-box.short {
-          width: 40%;
-          height: 32px;
-        }
-
-        .skeleton-box.tiny {
-          width: 80px;
-          height: 20px;
-        }
-
-        .anime-img.skeleton-box {
-          width: 240px;
-          height: 340px;
-        }
-
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @media (min-width: 768px) {
-          .details-grid {
-            flex-direction: row;
-            gap: 40px;
-          }
-
-          .anime-img {
-            flex-shrink: 0;
-            width: 240px;
-            height: 340px;
-          }
-
-          .details-info {
-            flex: 1;
-          }
         }
       `}</style>
     </>

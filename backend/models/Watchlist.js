@@ -13,6 +13,7 @@ const WatchlistSchema = new mongoose.Schema({
       type: String,
       enum: ["Watching", "Completed", "Plan to Watch"],
     },
+    favorite: Boolean,
   },
 });
 

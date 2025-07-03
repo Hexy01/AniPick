@@ -90,7 +90,7 @@ useEffect(() => {
           <div className="hero-overlay">
             <div className="hero-content">
               <h1>AniPick</h1>
-              <p>Find your next binge</p>
+              <p>Find your next binge🌸</p>
               <Link to="/signup" className="cta-button">Join the Club</Link>
             </div>
           </div>
@@ -186,7 +186,8 @@ useEffect(() => {
           font-family: 'Segoe UI', sans-serif;
           background-color: #553e5c;
           color: #eae1ed;
-          width: 100vw;
+          width: 100%;
+          min-height: 100vh;
         }
 
         .hero-section {
