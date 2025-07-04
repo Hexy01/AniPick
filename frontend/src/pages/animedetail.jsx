@@ -48,7 +48,7 @@ function AnimeDetails() {
 
   const fetchWatchlist = async () => {
     try {
-      const res = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/watchlist/${entry._id}`);
+      const res = await axios.get(`http://localhost:5000/api/watchlist/${username}`);
       const entries = res.data || [];
       setWatchlist(entries);
 
@@ -68,7 +68,7 @@ function AnimeDetails() {
 
   const handleAddToList = async () => {
     if (!username) {
-      toast.warn("Please log in to add to your list.");
+      toast.warn("⚠️ Please log in to add to your list.");
       return;
     }
 
@@ -85,7 +85,7 @@ function AnimeDetails() {
         },
       };
 
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/watchlist/add`, payload);
+      const res = await axios.post("http://localhost:5000/api/watchlist/add", payload);
 
       if (res.data.exists) {
         toast.info("You've already added this anime to your list.");
@@ -105,11 +105,11 @@ function AnimeDetails() {
     try {
       const entry = watchlist.find((item) => item.anime && item.anime.id == id);
       if (!entry) {
-        toast.warn("Anime not found in your list.");
+        toast.warn("⚠️ Anime not found in your list.");
         return;
       }
-      const res = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/watchlist/${entry._id}`);
-      toast.success("Removed from your list.");
+      await axios.delete(`http://localhost:5000/api/watchlist/${entry._id}`);
+      toast.success("❌ Removed from your list.");
       fetchWatchlist();
     } catch (err) {
       console.error(err);
@@ -119,7 +119,7 @@ function AnimeDetails() {
 
   const handleFavoriteToggle = async () => {
     if (!username || !anime) {
-      toast.warn("User or Anime data is missing.");
+      toast.warn("⚠️ User or Anime data is missing.");
       return;
     }
 
@@ -127,14 +127,13 @@ function AnimeDetails() {
       const entry = watchlist.find((item) => item.anime && item.anime.id == anime.mal_id);
 
       if (!entry) {
-        toast.error("Anime not found in your list. Please add it first.");
+        toast.error("❌ Anime not found in your list. Please add it first.");
         return;
       }
-     const res = await axios.patch(
-  `${import.meta.env.VITE_API_BASE_URL}/api/watchlist/favorite/${username}/${anime.mal_id}`
-);
 
-
+      const res = await axios.patch(
+        `http://localhost:5000/api/watchlist/favorite/${username}/${anime.mal_id}`
+      );
 
       if (res.data.success) {
         const newFavoriteStatus = res.data.favorite;
