@@ -68,7 +68,7 @@ function AnimeDetails() {
 
   const handleAddToList = async () => {
     if (!username) {
-      toast.warn("⚠️ Please log in to add to your list.");
+      toast.warn("Please log in to add to your list.");
       return;
     }
 
@@ -93,11 +93,11 @@ function AnimeDetails() {
         toast.success("Added to your " + selectedStatus + " list!");
         fetchWatchlist();
       } else {
-        toast.error("❌ Something went wrong while adding the anime.");
+        toast.error("Something went wrong while adding the anime.");
       }
     } catch (err) {
       console.error(err);
-      toast.error("❌ Failed to add anime to your list.");
+      toast.error("Failed to add anime to your list.");
     }
   };
 
@@ -105,21 +105,21 @@ function AnimeDetails() {
     try {
       const entry = watchlist.find((item) => item.anime && item.anime.id == id);
       if (!entry) {
-        toast.warn("⚠️ Anime not found in your list.");
+        toast.warn("Anime not found in your list.");
         return;
       }
       await axios.delete(`http://localhost:5000/api/watchlist/${entry._id}`);
-      toast.success("❌ Removed from your list.");
+      toast.success("Removed from your list.");
       fetchWatchlist();
     } catch (err) {
       console.error(err);
-      toast.error("❌ Failed to remove anime from your list.");
+      toast.error("Failed to remove anime from your list.");
     }
   };
 
   const handleFavoriteToggle = async () => {
     if (!username || !anime) {
-      toast.warn("⚠️ User or Anime data is missing.");
+      toast.warn("User or Anime data is missing.");
       return;
     }
 
@@ -127,7 +127,7 @@ function AnimeDetails() {
       const entry = watchlist.find((item) => item.anime && item.anime.id == anime.mal_id);
 
       if (!entry) {
-        toast.error("❌ Anime not found in your list. Please add it first.");
+        toast.error("Anime not found in your list. Please add it first.");
         return;
       }
 
@@ -140,11 +140,11 @@ function AnimeDetails() {
         setIsFavorite(newFavoriteStatus);
         toast(newFavoriteStatus ? "❤️ Added to your Favorites!" : "❌ Removed from your Favorites.");
       } else {
-        toast.error("❌ Failed to update favorite status.");
+        toast.error("Failed to update favorite status.");
       }
     } catch (err) {
       console.error("Favorite toggle failed", err);
-      toast.error("❌ Failed to update favorite status.");
+      toast.error("Failed to update favorite status.");
     }
   };
 
