@@ -9,11 +9,7 @@ const watchlistRoutes = require("./routes/watchlist"); // ✅ Import the route f
 // app.use("/api/watchlist", watchlistRoutes); // ✅ Register route correctly
 const app = express();
 app.use(cors({
-  origin: [
-    "http://localhost:5173", // for local dev
-    "https://ani-pick-ochre.vercel.app", // for production frontend
-  ],
-  methods: ["GET", "POST", "PATCH", "DELETE"],
+  origin: 'http://localhost:5173', // frontend origin
   credentials: true,
 }));
 app.use(express.json());
@@ -21,7 +17,10 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 
 // ✅ MongoDB Connection
-mongoose.connect(MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
