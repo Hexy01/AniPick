@@ -206,7 +206,7 @@ useEffect(() => {
   left: 0;
   height: 100%;
   width: 100%;
-  background-image: url("/AniPick/frontend/public/anipick BG.jpg");
+  background-image: url("https://w.wallhaven.cc/full/8x/wallhaven-8xvmry.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

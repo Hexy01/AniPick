@@ -1,7 +1,9 @@
+// src/api.js
 import axios from "axios";
 
-export default axios.create({
-  baseURL: "http://localhost:5000", // your backend
-  withCredentials: true, //for cookies
+const instance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE,
+  withCredentials: true,
 });
 
+export default instance;

@@ -333,7 +333,6 @@ function AnimeDetails() {
           font-weight: bold;
           font-size: 0.9rem;
           margin-top: 6px;
-          margin-left: 12px;
           cursor: pointer;
           width: fit-content;
         }
