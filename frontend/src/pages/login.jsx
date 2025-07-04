@@ -14,7 +14,9 @@ function Login({ setUsername }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("/api/auth/login", form);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, form);
+
+      
       const { token, username } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);

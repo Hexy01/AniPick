@@ -14,7 +14,8 @@ function Signup({ setUsername }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("/api/auth/signup", form);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, form);
+
       if (res.status === 201 || res.status === 200) {
         const { token, username } = res.data;
         localStorage.setItem("token", token);
