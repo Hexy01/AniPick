@@ -13,7 +13,8 @@ const UserProfile = () => {
 
   const fetchWatchlist = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/watchlist/${username}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/watchlist/${username}`);
+
       setWatchlist(res.data || []);
       console.log("📦 Watchlist data:", res.data);
     } catch (err) {
@@ -39,7 +40,7 @@ const filteredAnime = watchlist.filter((entry) => {
 
   const removeAnime = async (animeId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/watchlist/${animeId}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/watchlist/${animeId}`);
       setWatchlist((prev) => prev.filter((a) => a._id !== animeId));
     } catch (err) {
       console.error("❌ Error removing anime", err);

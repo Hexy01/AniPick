@@ -18,6 +18,7 @@ function AnimeDetails() {
   const [isInList, setIsInList] = useState(false);
 
   const username = localStorage.getItem("username");
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://your-render-backend-url.onrender.com";
 
   useEffect(() => {
     fetchAnimeDetails();
@@ -48,7 +49,7 @@ function AnimeDetails() {
 
   const fetchWatchlist = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/watchlist/${username}`);
+      const res = await axios.get(`${API_BASE_URL}/api/watchlist/${username}`);
       const entries = res.data || [];
       setWatchlist(entries);
 
@@ -85,7 +86,7 @@ function AnimeDetails() {
         },
       };
 
-      const res = await axios.post("http://localhost:5000/api/watchlist/add", payload);
+      const res = await axios.post(`${API_BASE_URL}/api/watchlist/add`, payload);
 
       if (res.data.exists) {
         toast.info("You've already added this anime to your list.");
@@ -108,7 +109,7 @@ function AnimeDetails() {
         toast.warn("Anime not found in your list.");
         return;
       }
-      await axios.delete(`http://localhost:5000/api/watchlist/${entry._id}`);
+      await axios.delete(`${API_BASE_URL}/api/watchlist/${entry._id}`);
       toast.success("Removed from your list.");
       fetchWatchlist();
     } catch (err) {
@@ -132,7 +133,7 @@ function AnimeDetails() {
       }
 
       const res = await axios.patch(
-        `http://localhost:5000/api/watchlist/favorite/${username}/${anime.mal_id}`
+        `${API_BASE_URL}/api/watchlist/favorite/${username}/${anime.mal_id}`
       );
 
       if (res.data.success) {
