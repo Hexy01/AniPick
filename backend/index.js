@@ -11,9 +11,16 @@ const app = express();
 const cors = require("cors");
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://anipick-frontend.onrender.com"], // both local + deployed frontend
+  origin: [ ""], // both local + deployed frontend
   credentials: true
 }));
+
+app.use(cors({
+  origin:["http://localhost:5173", "https://anipick-frontend.onrender.com"] , // ✅ Your frontend Render URL
+  methods: ["GET", "POST", "PATCH", "DELETE"],
+  credentials: true,
+}));
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
