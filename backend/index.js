@@ -9,7 +9,7 @@ const watchlistRoutes = require("./routes/watchlist"); // ✅ Import the route f
 // app.use("/api/watchlist", watchlistRoutes); // ✅ Register route correctly
 const app = express();
 app.use(cors({
-  origin:["http://localhost:5173", "https://anipick-frontend.onrender.com"] , // ✅ Your frontend Render URL
+  origin:["http://localhost:5173", "https://ani-pick-ten.vercel.app/"] ,
   methods: ["GET", "POST", "PATCH", "DELETE"],
   credentials: true,
 }));
