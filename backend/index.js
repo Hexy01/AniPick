@@ -8,13 +8,6 @@ const authRoutes = require('./routes/auth');
 const watchlistRoutes = require("./routes/watchlist"); // ✅ Import the route file
 // app.use("/api/watchlist", watchlistRoutes); // ✅ Register route correctly
 const app = express();
-const cors = require("cors");
-
-app.use(cors({
-  origin: [ ""], // both local + deployed frontend
-  credentials: true
-}));
-
 app.use(cors({
   origin:["http://localhost:5173", "https://anipick-frontend.onrender.com"] , // ✅ Your frontend Render URL
   methods: ["GET", "POST", "PATCH", "DELETE"],
