@@ -11,7 +11,7 @@ const app = express();
 const cors = require("cors");
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://anipick-backend.onrender.com"], // both local + deployed frontend
+  origin: ["http://localhost:5173", "https://anipick-frontend.onrender.com"], // both local + deployed frontend
   credentials: true
 }));
 app.use(express.json());
